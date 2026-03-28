@@ -1,4 +1,17 @@
 'use client';
+import { withPageAuthRequired, getSession } from '@auth0/nextjs-auth0';
+
+export default withPageAuthRequired(async function Dashboard() {
+  const session = await getSession();
+  const user = session?.user;
+
+  return (
+    <div>
+      <h1>Habari, {user?.nickname}!</h1>
+      {/* Your HATUA Dashboard content */}
+    </div>
+  );
+}, { returnTo: '/dashboard' });
 
 import React, { useState } from 'react';
 import Odometer from '@/components/Odometer';
