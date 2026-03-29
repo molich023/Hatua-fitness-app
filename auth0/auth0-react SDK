@@ -1,0 +1,45 @@
+import React, { useState } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
+
+const RedeemButton = ({ pointsBalance }: { pointsBalance: number }) => {
+  const { loginWithRedirect, isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleRedeemClick = async () => {
+    // 1. Minimum threshold check (500 points = KSH 50)
+    if (pointsBalance < 500) {
+      alert("Bado! You need at least 500 points to redeem.");
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // 2. TRIGGER RE-AUTHENTICATION
+      // This forces the Auth0 popup/redirect even if they are already logged in
+      await loginWithRedirect({
+        appState: { returnTo: '/dashboard/redeem-confirm' }, // Redirect back here after auth
+        authorizationParams: {
+          prompt: 'login', // This is the "Magic" string that forces re-auth
+          max_age: 0,      // Tells Auth0 the previous session is too 'old' for this action
+        }
+      });
+
+    } catch (error) {
+      console.error("Re-auth failed:", error);
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <button 
+      onClick={handleRedeemClick}
+      disabled={isProcessing}
+      className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all"
+    >
+      {isProcessing ? "Verifying Identity..." : "Redeem to M-Pesa"}
+    </button>
+  );
+};
+
+export default RedeemButton;
