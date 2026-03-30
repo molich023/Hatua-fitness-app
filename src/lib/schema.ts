@@ -1,63 +1,30 @@
-import { 
-  pgTable, 
-  text, 
-  integer, 
-  timestamp, 
-  doublePrecision, 
-  uuid, 
-  boolean,
-  pgEnum 
-} from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
 
-// 1. Define Enums for Tiers and Activity Types
-export const tierEnum = pgEnum("tier", ["Msingi", "Nguvu", "Dhahabu"]);
-export const activityEnum = pgEnum("activity_type", ["Walking", "Jogging", "Cycling", "Racing"]);
+import { pgTable, serial, text, integer, timestamp, doublePrecision, pgEnum } from 'drizzle-orm/pg-core';
 
-// 2. Users Table: The core profile
-export const users = pgTable("users", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  fullName: text("full_name").notNull(),
-  email: text("email").notNull().unique(),
-  phone: text("phone").notNull(), // For M-Pesa integration
-  password: text("password").notNull(), // Hashed
-  avatar: text("avatar").default("Simba"), // Simba, Chui, etc.
-  tier: tierEnum("tier").default("Msingi"),
-  points: integer("points").default(0),
-  referralCode: text("referral_code").unique().notNull(),
-  referredBy: uuid("referred_by"), // Track who invited them
-  createdAt: timestamp("created_at").defaultNow(),
+// 1. Define the Enums (Must match the SQL types we created)
+export const tierEnum = pgEnum('hatua_tier', ['Cheetah', 'Chui', 'Simba', 'Nyati']);
+export const statusEnum = pgEnum('sub_status', ['active', 'expired', 'pending_payment', 'cancelled']);
+
+// 2. The Users Table
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  auth0Id: text('auth0_id').unique().notNull(),
+  email: text('email').notNull(),
+  displayName: text('display_name'),
+  currentTier: tierEnum('current_tier').default('Cheetah'),
+  totalPoints: integer('total_points').default(0),
+  totalDistanceKm: doublePrecision('total_distance_km').default(0.0),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
-// 3. Activities Table: Every step counts
-export const activities = pgTable("activities", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").references(() => users.id).notNull(),
-  type: activityEnum("type").default("Walking"),
-  distanceMeters: integer("distance_meters").notNull(),
-  distanceKm: doublePrecision("distance_km").notNull(),
-  isOutdoor: boolean("is_outdoor").default(true),
-  pointsEarned: integer("points_earned").notNull(),
-  timestamp: timestamp("timestamp").defaultNow(),
+// 3. The Subscriptions Table
+export const subscriptions = pgTable('subscriptions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  tierPurchased: tierEnum('tier_purchased').notNull(),
+  amountPaid: integer('amount_paid').notNull(),
+  mpesaReceipt: text('mpesa_receipt_number').unique(),
+  status: statusEnum('status').default('pending_payment'),
+  startDate: timestamp('start_date').defaultNow(),
+  expiryDate: timestamp('expiry_date'),
 });
-
-// 4. Subscriptions Table: Track KSH payments
-export const subscriptions = pgTable("subscriptions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").references(() => users.id).notNull(),
-  amountKsh: integer("amount_ksh").notNull(), // 100, 500, or 1000
-  expiryDate: timestamp("expiry_date").notNull(),
-  isActive: boolean("is_active").default(true),
-  paymentRef: text("payment_ref").unique(), // M-Pesa Transaction ID
-});
-
-// 5. Relations: For easy data fetching
-export const userRelations = relations(users, ({ many, one }) => ({
-  activities: many(activities),
-  subscriptions: many(subscriptions),
-  inviter: one(users, {
-    fields: [users.referredBy],
-    references: [users.id],
-    relationName: "referral",
-  }),
-}));
