@@ -8,8 +8,8 @@ export default withMiddlewareAuthRequired(async function middleware(req: NextReq
   const user = session?.user;
 
   // 1. Get the role from the Auth0 User object
-  // Note: 'https://hatua.app/role' is a custom claim you set in Auth0 Actions
-  const userRole = user?.['https://hatua.app/role'] || 'Cheetah'; // Default role
+  // Note: 'https://hatua-fitness.netlif.app/role' is a custom claim you set in Auth0 Actions
+  const userRole = user?.['https://hatua-fitness.netlify.app/role'] || 'Cheetah'; // Default role
 
   const url = req.nextUrl.pathname;
 
