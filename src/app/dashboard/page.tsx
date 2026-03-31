@@ -8,7 +8,11 @@ export default withPageAuthRequired(async function Dashboard() {
   return (
     <div>
       <h1>Habari, {user?.nickname}!</h1>
-      {/* Your HATUA Dashboard content */}
+      {/* The Countdown lives here */}
+    <TrialCountdown 
+      plan={session?.user?.plan} 
+      trialExpires={session?.user?.trialExpires} 
+    />
     </div>
   );
 }, { returnTo: '/dashboard' });
