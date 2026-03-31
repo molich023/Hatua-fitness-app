@@ -1,18 +1,19 @@
-import { db } from "./db";
-import { users, activities } from "./schema";
-import { desc, sql, sum } from "drizzle-orm";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { desc } from "drizzle-orm";
 
-export async function getTopPerformers(limit = 10) {
-  return await db
+export async function getTopRunners() {
+  const topUsers = await db
     .select({
       id: users.id,
-      avatar: users.avatar,
-      totalMeters: sum(activities.distanceMeters).mapWith(Number),
+      name: users.name,
       points: users.points,
+      plan: users.plan,
     })
     .from(users)
-    .leftJoin(activities, sql`${users.id} = ${activities.userId}`)
-    .groupBy(users.id)
-    .orderBy(desc(sum(activities.distanceMeters)))
-    .limit(limit);
+    .orderBy(desc(users.points))
+    .limit(10);
+
+  return topUsers;
 }
+
