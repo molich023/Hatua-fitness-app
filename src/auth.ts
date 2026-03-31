@@ -6,7 +6,12 @@ export const { handlers, auth } = NextAuth({
   providers: [
     Resend({
       apiKey: process.env.AUTH_RESEND_KEY,
-      from: "HATUA <onboarding@resend.dev>", // Change once domain is verified
+      from: "HATUA <support@hatua.fitness>", 
+    async sendVerificationRequest({ identifier, url, provider }) {
+      
+    },
+  }),
+], 
       async sendVerificationRequest({ identifier, url, provider }) {
         const { host } = new URL(url);
         const resend = new Resend(provider.apiKey);
